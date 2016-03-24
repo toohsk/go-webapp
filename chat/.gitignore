@@ -1,0 +1,2 @@
+#ignore binnary file using `go build`
+chat
