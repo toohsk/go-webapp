@@ -16,7 +16,7 @@ func (c *client) read() {
 	for {
 		// メッセージの読み込み
 		if _, msg, err := c.socket.ReadMessage(); err == nil {
-			c.room.forword <- msg
+			c.room.forward <- msg
 		} else {
 			break
 		}
