@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/websocket"
+	"github.com/toohsk/go-webapp/trace"
 )
 
 type room struct {
@@ -13,6 +14,7 @@ type room struct {
 	join    chan *client
 	leave   chan *client
 	clients map[*client]bool
+	tracer  trace.Tracer
 }
 
 func (r *room) run() {
@@ -20,19 +22,24 @@ func (r *room) run() {
 		select {
 		case client := <-r.join:
 			r.clients[client] = true
+			r.tracer.Trace("New client has joined.")
 		case client := <-r.leave:
 			delete(r.clients, client)
 			close(client.send)
+			r.tracer.Trace("Client exit.")
 		case msg := <-r.forward:
+			r.tracer.Trace("Received a new message: ", string(msg))
 			// すべてのclientにメッセージを送信
 			for client := range r.clients {
 				select {
 				case client.send <- msg:
 					// メッセージ送信
+					r.tracer.Trace(" -- Send to clients")
 				default:
 					// 送信に失敗
 					delete(r.clients, client)
 					close(client.send)
+					r.tracer.Trace(" -- Failed sending massage to client. Clean up clients.")
 				}
 			}
 		}
@@ -69,5 +76,6 @@ func newRoom() *room {
 		join:    make(chan *client),
 		leave:   make(chan *client),
 		clients: make(map[*client]bool),
+		tracer:  trace.Off(),
 	}
 }

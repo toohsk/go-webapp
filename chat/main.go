@@ -1,12 +1,15 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"net/http"
+	_ "os"
 	"path/filepath"
 	"sync"
 	"text/template"
-	"flag"
+
+	_ "github.com/toohsk/go-webapp/trace"
 )
 
 // テンプレートの読み込み。一度だけ行われる
@@ -25,9 +28,9 @@ func (t *templateHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-    var addr = flag.String("addr", ":8080", "address of application")
-    flag.Parse()
-    
+	var addr = flag.String("addr", ":8080", "address of application")
+	flag.Parse()
+
 	r := newRoom()
 	http.Handle("/", &templateHandler{filename: "chat.html"})
 	http.Handle("/room", r)
@@ -35,7 +38,7 @@ func main() {
 	go r.run()
 
 	// start web server
-    log.Println("Webサーバを開始します。ポート: ", *addr)
+	log.Println("Webサーバを開始します。ポート: ", *addr)
 	if err := http.ListenAndServe(*addr, nil); err != nil {
 		log.Fatal("ListenAndServe:", err)
 	}
